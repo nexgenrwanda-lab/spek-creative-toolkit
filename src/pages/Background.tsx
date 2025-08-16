@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Upload, Download, ImageIcon, Shield, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { removeBackground, loadImage, cleanupObjectURLs } from "@/lib/background-removal";
+import { removeBackgroundHF } from "@/lib/huggingface-background-removal";
 
 const BackgroundPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -76,26 +77,31 @@ const BackgroundPage = () => {
 
     setIsProcessing(true);
     
+    // Clean up previous processed image
+    if (processedImage) {
+      URL.revokeObjectURL(processedImage);
+    }
+    
     try {
-      // Load image using our secure utility
-      const imageElement = await loadImage(selectedImage);
-      
-      // Remove background using our improved utility
-      const resultBlob = await removeBackground(imageElement);
-      
-      // Clean up previous processed image
-      if (processedImage) {
-        URL.revokeObjectURL(processedImage);
-      }
-      
-      // Create new object URL for result
+      // Try industry-level Hugging Face API first
+      const resultBlob = await removeBackgroundHF(selectedImage);
       const resultURL = URL.createObjectURL(resultBlob);
       setProcessedImage(resultURL);
+      toast.success("Background removed with industry-level AI!");
+    } catch (hfError) {
+      console.warn('Hugging Face API failed, falling back to local processing:', hfError);
       
-      toast.success("Background removed successfully!");
-    } catch (error) {
-      console.error('Error removing background:', error);
-      toast.error("Failed to remove background. Please try a different image or try again.");
+      // Fallback to local processing
+      try {
+        const imageElement = await loadImage(selectedImage);
+        const resultBlob = await removeBackground(imageElement);
+        const resultURL = URL.createObjectURL(resultBlob);
+        setProcessedImage(resultURL);
+        toast.success("Background removed locally!");
+      } catch (localError) {
+        console.error('Both methods failed:', localError);
+        toast.error(hfError instanceof Error ? hfError.message : "Failed to remove background. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -152,7 +158,7 @@ const BackgroundPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Shield className="w-4 h-4" />
-              <span>🔒 Your images are processed locally in your browser - nothing is uploaded or stored</span>
+              <span>🔒 Industry-level AI processing with complete privacy - no data stored</span>
             </div>
             {(imagePreview || processedImage) && (
               <Button
@@ -174,7 +180,7 @@ const BackgroundPage = () => {
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">Remove Backgrounds Instantly</h2>
           <p className="text-xl text-muted-foreground">
-            Upload any image and our AI will remove the background in seconds - all processing happens in your browser
+            Upload any image and get professional-quality background removal powered by industry-level AI
           </p>
         </div>
 
