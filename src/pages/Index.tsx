@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Type, Palette, ImageIcon } from "lucide-react";
 
 const Index = () => {
   const tools = [
@@ -9,7 +8,7 @@ const Index = () => {
       id: "fonts",
       title: "Spek Fonts",
       description: "Identify fonts from images and connect to Google Fonts",
-      icon: <Type className="w-8 h-8" />,
+      icon: <img src="/lovable-uploads/d40d976e-6549-4f0a-802f-33df507d4a5b.png" alt="Spek Fonts" className="w-8 h-8" />,
       color: "fonts",
       gradient: "bg-gradient-fonts",
       link: "/fonts"
@@ -18,7 +17,7 @@ const Index = () => {
       id: "palette",
       title: "Spek Palette",
       description: "Extract color palettes from any image",
-      icon: <Palette className="w-8 h-8" />,
+      icon: <img src="/lovable-uploads/19345d9e-16c9-43f6-a0b2-0f512ca29982.png" alt="Spek Palette" className="w-8 h-8" />,
       color: "palette",
       gradient: "bg-gradient-palette",
       link: "/palette"
@@ -27,7 +26,7 @@ const Index = () => {
       id: "background",
       title: "Spek Background",
       description: "Remove backgrounds from images instantly",
-      icon: <ImageIcon className="w-8 h-8" />,
+      icon: <img src="/lovable-uploads/86b13327-ef02-4439-b170-7065c6658c81.png" alt="Spek Background" className="w-8 h-8" />,
       color: "background-tool",
       gradient: "bg-gradient-background",
       link: "/background"
