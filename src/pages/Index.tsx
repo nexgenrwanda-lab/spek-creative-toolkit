@@ -39,15 +39,12 @@ const Index = () => {
       {/* Header */}
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-purple-500 rounded-sm flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-              </div>
-              <div className="w-4 h-4 bg-primary rounded-full" />
-              <div className="w-4 h-4 bg-fonts border-2 border-fonts" />
-            </div>
-            <h1 className="text-3xl font-bold">Spek Tools</h1>
+          <div className="flex items-center">
+            <img 
+              src="/lovable-uploads/5e0033bc-f334-4b8c-a108-6c953cefa845.png" 
+              alt="Spek Tools Logo" 
+              className="h-12"
+            />
           </div>
           <p className="text-muted-foreground mt-2">Professional design tools for creators</p>
         </div>
