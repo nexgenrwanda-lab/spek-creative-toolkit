@@ -1,16 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, Download, ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Download, ImageIcon, Shield, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { pipeline, env } from '@huggingface/transformers';
-
-// Configure transformers.js
-env.allowLocalModels = false;
-env.useBrowserCache = false;
-
-const MAX_IMAGE_DIMENSION = 1024;
+import { removeBackground, loadImage, cleanupObjectURLs } from "@/lib/background-removal";
 
 const BackgroundPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -19,11 +13,53 @@ const BackgroundPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cleanup function for privacy
+  const clearAllImages = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    if (processedImage) {
+      URL.revokeObjectURL(processedImage);
+      setProcessedImage(null);
+    }
+    setSelectedImage(null);
+    cleanupObjectURLs();
+    toast.success("All images cleared for privacy");
+  };
+
+  // Clean up on component unmount for privacy
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      if (processedImage) URL.revokeObjectURL(processedImage);
+      cleanupObjectURLs();
+    };
+  }, [imagePreview, processedImage]);
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Check file size (max 10MB for privacy and performance)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Image size must be less than 10MB");
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select a valid image file");
+        return;
+      }
+
       setSelectedImage(file);
       setProcessedImage(null); // Reset processed image
+      
+      // Clean up previous preview
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
@@ -32,33 +68,8 @@ const BackgroundPage = () => {
     }
   };
 
-  const resizeImageIfNeeded = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, image: HTMLImageElement) => {
-    let width = image.naturalWidth;
-    let height = image.naturalHeight;
-
-    if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-      if (width > height) {
-        height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
-        width = MAX_IMAGE_DIMENSION;
-      } else {
-        width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
-        height = MAX_IMAGE_DIMENSION;
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(image, 0, 0, width, height);
-      return true;
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(image, 0, 0);
-    return false;
-  };
-
-  const removeBackground = async () => {
-    if (!selectedImage || !imagePreview) {
+  const handleRemoveBackground = async () => {
+    if (!selectedImage) {
       toast.error("Please upload an image first");
       return;
     }
@@ -66,99 +77,27 @@ const BackgroundPage = () => {
     setIsProcessing(true);
     
     try {
-      console.log('Starting background removal process...');
+      // Load image using our secure utility
+      const imageElement = await loadImage(selectedImage);
       
-      // Load the image
-      const img = new Image();
-      img.onload = async () => {
-        try {
-          const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-            device: 'webgpu',
-          });
-          
-          // Convert HTMLImageElement to canvas
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) throw new Error('Could not get canvas context');
-          
-          // Resize image if needed and draw it to canvas
-          const wasResized = resizeImageIfNeeded(canvas, ctx, img);
-          console.log(`Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${canvas.width}x${canvas.height}`);
-          
-          // Get image data as base64
-          const imageData = canvas.toDataURL('image/jpeg', 0.8);
-          console.log('Image converted to base64');
-          
-          // Process the image with the segmentation model
-          console.log('Processing with segmentation model...');
-          const result = await segmenter(imageData);
-          
-          console.log('Segmentation result:', result);
-          
-          if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
-            throw new Error('Invalid segmentation result');
-          }
-          
-          // Create a new canvas for the masked image
-          const outputCanvas = document.createElement('canvas');
-          outputCanvas.width = canvas.width;
-          outputCanvas.height = canvas.height;
-          const outputCtx = outputCanvas.getContext('2d');
-          
-          if (!outputCtx) throw new Error('Could not get output canvas context');
-          
-          // Draw original image
-          outputCtx.drawImage(canvas, 0, 0);
-          
-          // Apply the mask
-          const outputImageData = outputCtx.getImageData(
-            0, 0,
-            outputCanvas.width,
-            outputCanvas.height
-          );
-          const data = outputImageData.data;
-          
-          // Apply inverted mask to alpha channel
-          for (let i = 0; i < result[0].mask.data.length; i++) {
-            // Invert the mask value (1 - value) to keep the subject instead of the background
-            const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
-            data[i * 4 + 3] = alpha;
-          }
-          
-          outputCtx.putImageData(outputImageData, 0, 0);
-          console.log('Mask applied successfully');
-          
-          // Convert canvas to blob and create URL
-          outputCanvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              setProcessedImage(url);
-              setIsProcessing(false);
-              toast.success("Background removed successfully!");
-            } else {
-              throw new Error('Failed to create blob');
-            }
-          }, 'image/png', 1.0);
-          
-        } catch (error) {
-          console.error('Error removing background:', error);
-          setIsProcessing(false);
-          toast.error("Failed to remove background. Please try again.");
-        }
-      };
+      // Remove background using our improved utility
+      const resultBlob = await removeBackground(imageElement);
       
-      img.onerror = () => {
-        setIsProcessing(false);
-        toast.error("Failed to load image");
-      };
+      // Clean up previous processed image
+      if (processedImage) {
+        URL.revokeObjectURL(processedImage);
+      }
       
-      img.src = imagePreview;
+      // Create new object URL for result
+      const resultURL = URL.createObjectURL(resultBlob);
+      setProcessedImage(resultURL);
       
+      toast.success("Background removed successfully!");
     } catch (error) {
       console.error('Error removing background:', error);
+      toast.error("Failed to remove background. Please try a different image or try again.");
+    } finally {
       setIsProcessing(false);
-      toast.error("Failed to remove background. Please try again.");
     }
   };
 
@@ -166,8 +105,11 @@ const BackgroundPage = () => {
     if (processedImage) {
       const link = document.createElement('a');
       link.href = processedImage;
-      link.download = 'background-removed.png';
+      link.download = `background-removed-${Date.now()}.png`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      toast.success("Image downloaded successfully!");
     }
   };
 
@@ -188,8 +130,12 @@ const BackgroundPage = () => {
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-background p-3 rounded-xl text-white">
-                <ImageIcon className="w-6 h-6" />
+              <div className="p-3 rounded-xl">
+                <img 
+                  src="/lovable-uploads/86b13327-ef02-4439-b170-7065c6658c81.png" 
+                  alt="Spek Background" 
+                  className="h-6 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Spek Background</h1>
@@ -200,12 +146,35 @@ const BackgroundPage = () => {
         </div>
       </header>
 
+      {/* Privacy Notice */}
+      <div className="bg-muted/50 border-b">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="w-4 h-4" />
+              <span>🔒 Your images are processed locally in your browser - nothing is uploaded or stored</span>
+            </div>
+            {(imagePreview || processedImage) && (
+              <Button
+                onClick={clearAllImages}
+                variant="outline"
+                size="sm"
+                className="ml-4"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear All
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">Remove Backgrounds Instantly</h2>
           <p className="text-xl text-muted-foreground">
-            Upload any image and our AI will remove the background in seconds
+            Upload any image and our AI will remove the background in seconds - all processing happens in your browser
           </p>
         </div>
 
@@ -225,7 +194,7 @@ const BackgroundPage = () => {
                   {selectedImage ? selectedImage.name : "Drop your image here"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  or click to browse files
+                  or click to browse files (max 10MB)
                 </p>
               </div>
               
@@ -248,9 +217,9 @@ const BackgroundPage = () => {
               )}
 
               <Button 
-                onClick={removeBackground}
+                onClick={handleRemoveBackground}
                 disabled={!selectedImage || isProcessing}
-                className="w-full bg-gradient-background hover:opacity-90 text-white border-0"
+                className="w-full hover:opacity-90 text-white border-0"
               >
                 {isProcessing ? "Removing Background..." : "Remove Background"}
               </Button>
@@ -269,7 +238,7 @@ const BackgroundPage = () => {
                     size="sm"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download
+                    Download PNG
                   </Button>
                 )}
               </CardTitle>
@@ -299,43 +268,81 @@ const BackgroundPage = () => {
           </Card>
         </div>
 
-        {/* How it Works */}
-        <Card className="mt-12 shadow-tool">
-          <CardHeader>
-            <CardTitle>How It Works</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="bg-gradient-background p-4 rounded-xl w-fit mx-auto mb-4 text-white">
-                  <Upload className="w-6 h-6" />
+        {/* Privacy & How it Works */}
+        <div className="grid md:grid-cols-2 gap-8 mt-12">
+          {/* Privacy Features */}
+          <Card className="shadow-tool">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Privacy & Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                  <div>
+                    <p className="font-medium">Local Processing</p>
+                    <p className="text-sm text-muted-foreground">All image processing happens in your browser</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold mb-2">1. Upload</h3>
-                <p className="text-sm text-muted-foreground">
-                  Upload any image with a subject you want to isolate
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="bg-gradient-background p-4 rounded-xl w-fit mx-auto mb-4 text-white">
-                  <ImageIcon className="w-6 h-6" />
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                  <div>
+                    <p className="font-medium">No Data Storage</p>
+                    <p className="text-sm text-muted-foreground">Images are never uploaded or stored on our servers</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold mb-2">2. Process</h3>
-                <p className="text-sm text-muted-foreground">
-                  AI analyzes and removes the background automatically
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="bg-gradient-background p-4 rounded-xl w-fit mx-auto mb-4 text-white">
-                  <Download className="w-6 h-6" />
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                  <div>
+                    <p className="font-medium">Automatic Cleanup</p>
+                    <p className="text-sm text-muted-foreground">All temporary data is automatically cleared</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold mb-2">3. Download</h3>
-                <p className="text-sm text-muted-foreground">
-                  Download your image with transparent background
-                </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* How it Works */}
+          <Card className="shadow-tool">
+            <CardHeader>
+              <CardTitle>How It Works</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Upload className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">1. Upload</p>
+                    <p className="text-sm text-muted-foreground">Select an image from your device</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <ImageIcon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">2. AI Processing</p>
+                    <p className="text-sm text-muted-foreground">Advanced AI identifies and removes background</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <Download className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium">3. Download</p>
+                    <p className="text-sm text-muted-foreground">Get your image with transparent background</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
