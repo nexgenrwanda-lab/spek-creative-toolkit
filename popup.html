@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spek Tools</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="icons/icon-large.png" alt="Spek Tools" class="logo-icon">
+                <h1>Spek Tools</h1>
+            </div>
+            <p class="subtitle">Professional Design Assistant</p>
+        </header>
+
+        <!-- Tool Selection -->
+        <div class="tools-grid">
+            <button class="tool-card" id="fontTool">
+                <div class="tool-icon">📝</div>
+                <h3>Font Finder</h3>
+                <p>Identify fonts from images</p>
+            </button>
+
+            <button class="tool-card" id="paletteTool">
+                <div class="tool-icon">🎨</div>
+                <h3>Color Palette</h3>
+                <p>Extract color schemes</p>
+            </button>
+
+            <button class="tool-card" id="backgroundTool">
+                <div class="tool-icon">✂️</div>
+                <h3>Background Remover</h3>
+                <p>AI-powered removal</p>
+            </button>
+        </div>
+
+        <!-- Tool Interfaces -->
+        <div class="tool-interface" id="fontInterface" style="display: none;">
+            <div class="interface-header">
+                <button class="back-btn" data-target="main">← Back</button>
+                <h2>Font Identification</h2>
+            </div>
+            <div class="upload-area" id="fontUpload">
+                <div class="upload-icon">📁</div>
+                <p>Drop image or click to upload</p>
+                <small>Supports JPG, PNG, WebP</small>
+            </div>
+            <input type="file" id="fontFileInput" accept="image/*" style="display: none;">
+            <div class="results" id="fontResults"></div>
+        </div>
+
+        <div class="tool-interface" id="paletteInterface" style="display: none;">
+            <div class="interface-header">
+                <button class="back-btn" data-target="main">← Back</button>
+                <h2>Color Palette</h2>
+            </div>
+            <div class="upload-area" id="paletteUpload">
+                <div class="upload-icon">🎨</div>
+                <p>Drop image or click to upload</p>
+                <small>Extract dominant colors</small>
+            </div>
+            <input type="file" id="paletteFileInput" accept="image/*" style="display: none;">
+            <div class="results" id="paletteResults"></div>
+        </div>
+
+        <div class="tool-interface" id="backgroundInterface" style="display: none;">
+            <div class="interface-header">
+                <button class="back-btn" data-target="main">← Back</button>
+                <h2>Background Removal</h2>
+            </div>
+            <div class="upload-area" id="backgroundUpload">
+                <div class="upload-icon">✂️</div>
+                <p>Drop image or click to upload</p>
+                <small>AI-powered background removal</small>
+            </div>
+            <input type="file" id="backgroundFileInput" accept="image/*" style="display: none;">
+            <div class="processing" id="backgroundProcessing" style="display: none;">
+                <div class="spinner"></div>
+                <p>Removing background...</p>
+            </div>
+            <div class="results" id="backgroundResults"></div>
+        </div>
+
+        <!-- Privacy Notice -->
+        <div class="privacy-notice">
+            <div class="privacy-icon">🔒</div>
+            <small>All processing happens locally - your images are never stored</small>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <a href="#" id="visitWebsite" class="website-link">Visit Full Website</a>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

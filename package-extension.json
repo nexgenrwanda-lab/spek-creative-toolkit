@@ -1,0 +1,12 @@
+{
+  "name": "spek-tools-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension build files for Spek Tools",
+  "scripts": {
+    "build": "echo 'Extension files ready'",
+    "pack": "zip -r spek-tools-extension.zip manifest.json popup.html popup.css popup.js icons/ README-extension.md"
+  },
+  "keywords": ["chrome-extension", "design-tools", "fonts", "colors", "background-removal"],
+  "author": "Spek Tools",
+  "license": "MIT"
+}
