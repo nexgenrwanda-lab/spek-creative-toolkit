@@ -74,12 +74,8 @@ const Fonts = () => {
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl">
-                <img 
-                  src="/lovable-uploads/d40d976e-6549-4f0a-802f-33df507d4a5b.png" 
-                  alt="Spek Fonts" 
-                  className="h-6 object-contain"
-                />
+              <div className="bg-gradient-fonts p-3 rounded-xl text-white">
+                <Type className="w-6 h-6" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Spek Fonts</h1>

@@ -64,6 +64,51 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Security & Privacy Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-card">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-full bg-primary/10">
+              <Shield className="h-8 w-8 text-primary" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold mb-6">Privacy First Design</h2>
+          <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Your data stays yours. All processing happens locally in your browser when possible, 
+            with secure API calls for advanced features. No tracking, no storage.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-2">Secure Processing</h3>
+              <p className="text-sm text-muted-foreground">
+                Industry-grade encryption and secure API endpoints
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
+                <Eye className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-2">No Tracking</h3>
+              <p className="text-sm text-muted-foreground">
+                Zero data collection, no cookies, complete privacy
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-2">Local First</h3>
+              <p className="text-sm text-muted-foreground">
+                Most processing happens directly in your browser
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Tools Grid */}
       <section className="pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -158,51 +203,6 @@ const Index = () => {
           <p className="text-xs text-muted-foreground mt-4">
             Compatible with Chrome 88+ and all Chromium-based browsers
           </p>
-        </div>
-      </section>
-
-      {/* Security & Privacy Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-card">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-full bg-primary/10">
-              <Shield className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold mb-6">Privacy First Design</h2>
-          <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Your data stays yours. All processing happens locally in your browser when possible, 
-            with secure API calls for advanced features. No tracking, no storage.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
-                <Lock className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Secure Processing</h3>
-              <p className="text-sm text-muted-foreground">
-                Industry-grade encryption and secure API endpoints
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
-                <Eye className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">No Tracking</h3>
-              <p className="text-sm text-muted-foreground">
-                Zero data collection, no cookies, complete privacy
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">Local First</h3>
-              <p className="text-sm text-muted-foreground">
-                Most processing happens directly in your browser
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 

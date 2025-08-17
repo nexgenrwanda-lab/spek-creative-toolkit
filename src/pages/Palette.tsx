@@ -114,12 +114,8 @@ const PalettePage = () => {
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl">
-                <img 
-                  src="/lovable-uploads/19345d9e-16c9-43f6-a0b2-0f512ca29982.png" 
-                  alt="Spek Palette" 
-                  className="h-6 object-contain"
-                />
+              <div className="bg-gradient-palette p-3 rounded-xl text-white">
+                <Palette className="w-6 h-6" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Spek Palette</h1>
